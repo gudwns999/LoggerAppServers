@@ -41,6 +41,8 @@ public class GoogleMAP extends FragmentActivity implements
     private ArrayList<LatLng> arrayPoints;
     private GoogleMap mGoogleMap;
 
+    PolylineOptions pOptionsl = new PolylineOptions();
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -56,7 +58,6 @@ public class GoogleMAP extends FragmentActivity implements
     private void appendText(String msg) {
         text01.append(msg + "\n");
     }
-
     /** Map 클릭시 터치 이벤트 */
     public void onMapClick(LatLng point) {
         // 현재 위도와 경도에서 화면 포인트를 알려준다
@@ -76,7 +77,6 @@ public class GoogleMAP extends FragmentActivity implements
      * @author
      */
     private void init() {
-
         GooglePlayServicesUtil.isGooglePlayServicesAvailable(GoogleMAP.this);
         mGoogleMap = ((SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map)).getMap();
@@ -107,6 +107,13 @@ public class GoogleMAP extends FragmentActivity implements
             optSecond.title("End Position"); // 제목 미리보기
             optSecond.snippet("국민대");
             mGoogleMap.addMarker(optSecond).showInfoWindow();
+
+            PolylineOptions pOptions = new PolylineOptions();
+            pOptions.color(Color.RED);
+            pOptions.width(10);
+            pOptions.add((new LatLng(37.6009768, 127.0152232)));
+            pOptions.add((new LatLng(37.6108733, 126.9951006)));
+            Polyline pLine = mGoogleMap.addPolyline(pOptions);
         }
 
     }
@@ -286,6 +293,12 @@ public class GoogleMAP extends FragmentActivity implements
 
             Marker marker = mGoogleMap.addMarker(optNow);
             marker.setPosition(latLng[i]);
+
+
+            pOptionsl.color(Color.BLUE);
+            pOptionsl.width(5);
+            pOptionsl.add(latLng[i]);
+            Polyline pLine = mGoogleMap.addPolyline(pOptionsl);
 
             Log.d("맵좌표", "좌표: 위도(" + String.valueOf(latitude) + "), 경도("
                     + String.valueOf(longitude) + ")+("+i+" chance)");
