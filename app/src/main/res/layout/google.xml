@@ -8,13 +8,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/text01"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="의미없는 버튼"
+        android:id="@+id/button"
+        android:layout_alignParentEnd="true" />
     <fragment
         android:id="@+id/map"
         android:name="com.example.GoogleMapVersion2.Fragment"
         class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/text01">
+        android:layout_below="@+id/button">
     </fragment>
 
 </RelativeLayout>
