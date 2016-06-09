@@ -1,6 +1,7 @@
 package gudwns999.com.loggerapp;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,11 +10,15 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,14 +35,28 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class GoogleMAP extends FragmentActivity implements
         GoogleMap.OnMapClickListener {
+    //로그인 php
+
+
     int i=1;
     TextView text01;
+    Button btn1, btn2;
     private ArrayList<LatLng> arrayPoints;
     private GoogleMap mGoogleMap;
 
@@ -51,8 +70,23 @@ public class GoogleMAP extends FragmentActivity implements
 
         // BitmapDescriptorFactory 생성하기 위한 소스
         MapsInitializer.initialize(getApplicationContext());
-
         init();
+        btn1 = (Button)findViewById(R.id.button1);
+        btn2 = (Button)findViewById(R.id.button2);
+
+        btn1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+
+        btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
     }
 
     private void appendText(String msg) {
@@ -278,7 +312,7 @@ public class GoogleMAP extends FragmentActivity implements
             getLocation();
             double latitude = getLatitude();
             double longitude = getLongitude();
-            LatLng[] latLng = new LatLng[100];
+            final LatLng[] latLng = new LatLng[100];
 
             // TODO Auto-generated method stub
             //현재 마커 설정.
@@ -293,8 +327,7 @@ public class GoogleMAP extends FragmentActivity implements
 
             Marker marker = mGoogleMap.addMarker(optNow);
             marker.setPosition(latLng[i]);
-
-
+            new AsyncPost().execute(""+i,""+""+latLng[i]);
             pOptionsl.color(Color.BLUE);
             pOptionsl.width(5);
             pOptionsl.add(latLng[i]);
@@ -319,5 +352,124 @@ public class GoogleMAP extends FragmentActivity implements
         public void onProviderDisabled(String provider) {
             // TODO Auto-generated method stub
         }
+    }
+
+    //HttpUrlConnection
+    public class AsyncPost extends AsyncTask<String, String, String>
+    {
+        ProgressDialog pdLoading = new ProgressDialog(GoogleMAP.this);
+        HttpURLConnection conn;
+        URL url = null;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            //this method will be running on UI thread
+            pdLoading.setMessage("\tLoading...");
+            pdLoading.setCancelable(false);
+            pdLoading.show();
+
+        }
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+
+                // Enter URL address where your php file resides
+                url = new URL("http://gudwns999.com/PHP/androidRequest.php");
+
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return "exception";
+            }
+            try {
+                // Setup HttpURLConnection class to send and receive data from php and mysql
+                conn = (HttpURLConnection)url.openConnection();
+                conn.setReadTimeout(10000);
+                conn.setConnectTimeout(5000);
+                conn.setRequestMethod("POST");
+
+                // setDoInput and setDoOutput method depict handling of both send and receive
+                conn.setDoInput(true);
+                conn.setDoOutput(true);
+
+                // Append parameters to URL
+                Uri.Builder builder = new Uri.Builder()
+                        .appendQueryParameter("log_no", params[0])
+                        .appendQueryParameter("latLng", params[1]);
+                String query = builder.build().getEncodedQuery();
+
+                // Open connection for sending data
+                OutputStream os = conn.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+                writer.write(query);
+                writer.flush();
+                writer.close();
+                os.close();
+                conn.connect();
+
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+                return "exception";
+            }
+
+            try {
+
+                int response_code = conn.getResponseCode();
+
+                // Check if successful connection made
+                if (response_code == HttpURLConnection.HTTP_OK) {
+
+                    // Read data sent from server
+                    InputStream input = conn.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+                    StringBuilder result = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        result.append(line);
+                    }
+
+                    // Pass data to onPostExecute method
+                    return(result.toString());
+
+                }else{
+
+                    return("unsuccessful");
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "exception";
+            } finally {
+                conn.disconnect();
+            }
+
+
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+
+            //this method will be running on UI thread
+
+            pdLoading.dismiss();
+
+            if(result.equalsIgnoreCase("true"))
+            {
+                /* Here launching another activity when login successful. If you persist login state
+                use sharedPreferences of Android. and logout button to clear sharedPreferences.
+                 */
+            }else if (result.equalsIgnoreCase("false")){
+
+                // If username and password does not match display a error message
+            } else if (result.equalsIgnoreCase("exception") || result.equalsIgnoreCase("unsuccessful")) {
+
+            }
+        }
+
     }
 }
